@@ -1,14 +1,74 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Analizador de piel</title>
+  <meta charset="UTF-8" />
+  <title>Informe de piel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; max-width: 600px; }
+    button { padding: 0.6rem 1rem; border-radius: 6px; border: none; background: #0a66c2; color: white; }
+    ul { list-style: none; padding-left: 0; }
+    li { margin-bottom: 0.5rem; }
+    #report { margin-top:2rem; padding:1rem; border:1px solid #ccc; border-radius:8px; background:#f9f9f9; }
+  </style>
 </head>
 <body>
-  <h2>Sube tu imagen para analizar la piel</h2>
-  <form action="https://aging-analyzer.onrender.com/analyze" method="POST" enctype="multipart/form-data" target="_blank">
-    <input type="file" name="file" required>
-    <button type="submit">Analizar</button>
-  </form>
+  <div class="card">
+    <h1>Analizador de piel</h1>
+    <form id="uploadForm">
+      <label for="imageInput"><strong>Imagen:</strong></label><br />
+      <input type="file" id="imageInput" name="file" accept="image/*" required />
+      <br /><br />
+      <button type="submit">Analizar</button>
+    </form>
+
+    <div id="report">
+      <h2>Informe diagnóstico</h2>
+      <div id="diagnosisText">Sube una imagen y pulsa “Analizar”.</div>
+      <ul id="scoreList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const ENDPOINT = "https://aging-analyzer.onrender.com/analyze";
+
+    function renderScore(name, value) {
+      const score = Math.min(10, Math.max(0, Math.round(value / 10)));
+      return `<li><strong>${name}:</strong> ${score}/10</li>`;
+    }
+
+    function renderReport(data) {
+      const m = data.metrics || {};
+      const list = [
+        renderScore("Brillo", m.brightness),
+        renderScore("Contraste", m.contrast),
+        renderScore("Rojez", m.redness_index),
+        renderScore("Color R", m.avg_color?.r || 0),
+        renderScore("Color G", m.avg_color?.g || 0),
+        renderScore("Color B", m.avg_color?.b || 0)
+      ];
+      document.getElementById("diagnosisText").innerText = data.diagnosis || "—";
+      document.getElementById("scoreList").innerHTML = list.join("");
+    }
+
+    document.getElementById("uploadForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const fileInput = document.getElementById("imageInput");
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      document.getElementById("diagnosisText").innerText = "Analizando...";
+      document.getElementById("scoreList").innerHTML = "";
+
+      try {
+        const response = await fetch(ENDPOINT, { method: "POST", body: formData });
+        const data = await response.json();
+        renderReport(data);
+      } catch (err) {
+        document.getElementById("diagnosisText").innerText = "Error al analizar: " + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
