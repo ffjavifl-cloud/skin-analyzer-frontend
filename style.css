@@ -1,0 +1,53 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: #f4f4f9;
+}
+
+h1 {
+  color: #333;
+}
+
+#status {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.label {
+  display: inline-block;
+  background: #0078d7;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+#clinical-report {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+#diagnostic-report {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fff;
+  border-left: 4px solid #0078d7;
+}
+
+#copy-report {
+  margin-top: 15px;
+  padding: 8px 12px;
+  background: #0078d7;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#copy-report:hover {
+  background: #005a9e;
+}
