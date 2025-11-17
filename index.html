@@ -1,139 +1,102 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Informe de piel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; max-width: 600px; }
-    button { padding: 0.6rem 1rem; border-radius: 6px; border: none; background: #0a66c2; color: white; }
-    ul { list-style: none; padding-left: 0; }
-    li { margin-bottom: 0.5rem; }
-    #report { margin-top:2rem; padding:1rem; border:1px solid #ccc; border-radius:8px; background:#f9f9f9; }
-    #serviceStatus { margin-top:1rem; font-size:0.9rem; color:#555; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Analizador de piel</h1>
-    <form id="uploadForm">
-      <label for="imageInput"><strong>Imagen:</strong></label><br />
-      <input type="file" id="imageInput" name="file" accept="image/*" required />
-      <br /><br />
-      <button type="submit">Analizar</button>
-    </form>
+<!-- ... (todo tu HTML y estilos igual que antes) ... -->
 
-    <div id="report">
-      <h2>Informe diagnóstico</h2>
-      <div id="diagnosisText">Sube una imagen y pulsa “Analizar”.</div>
-      <ul id="scoreList"></ul>
-    </div>
+<script>
+const ENDPOINT = "https://aging-analyzer.onrender.com/analyze";
+const HEALTH_URL = "https://aging-analyzer.onrender.com/";
+const PING_INTERVAL_MS = 10 * 60 * 1000;
 
-    <div id="serviceStatus">Estado del servicio: comprobando…</div>
-  </div>
+function renderScore(name, value) {
+  const score = Math.min(10, Math.max(0, value));
+  return `<li><strong>${name}:</strong> ${score}/10</li>`;
+}
 
-  <script>
-  const ENDPOINT = "https://aging-analyzer.onrender.com/analyze";
-  const HEALTH_URL = "https://aging-analyzer.onrender.com/";
-  const PING_INTERVAL_MS = 10 * 60 * 1000; // 10 minutos
+function renderReport(data) {
+  const m = data.metrics || {};
+  const s = data.scores || {};
 
-  function renderScore(name, value) {
-    const score = Math.min(10, Math.max(0, value));
-    return `<li><strong>${name}:</strong> ${score}/10</li>`;
-  }
+  const metricsList = [
+    renderScore("Brillo", Math.round(m.brightness / 25.5)),
+    renderScore("Contraste", Math.round(m.contrast / 25.5)),
+    renderScore("Rojez", Math.round(m.redness_index / 10))
+  ];
 
-  function renderReport(data) {
-    const m = data.metrics || {};
-    const s = data.scores || {};
+  const scoresList = [
+    renderScore("Arrugas profundas", s.wrinkles_deep),
+    renderScore("Líneas finas", s.lines_fine),
+    renderScore("Pigmentación", s.pigmentation),
+    renderScore("Sequedad", s.dryness),
+    renderScore("Brillo excesivo", s.brightness_excess),
+    renderScore("Poros visibles", s.pores_visible)
+  ];
 
-    const metricsList = [
-      renderScore("Brillo", Math.round(m.brightness / 25.5)),
-      renderScore("Contraste", Math.round(m.contrast / 25.5)),
-      renderScore("Rojez", Math.round(m.redness_index / 10))
-    ];
+  document.getElementById("diagnosisText").innerText = data.diagnosis || "—";
+  document.getElementById("scoreList").innerHTML = metricsList.concat(scoresList).join("");
+}
 
-    const scoresList = [
-      renderScore("Arrugas profundas", s.wrinkles_deep),
-      renderScore("Líneas finas", s.lines_fine),
-      renderScore("Pigmentación", s.pigmentation),
-      renderScore("Sequedad", s.dryness),
-      renderScore("Brillo excesivo", s.brightness_excess),
-      renderScore("Poros visibles", s.pores_visible)
-    ];
+function setServiceStatus(text, ok = true) {
+  const el = document.getElementById("serviceStatus");
+  if (!el) return;
+  el.textContent = "Estado del servicio: " + text;
+  el.style.color = ok ? "#2f7a2f" : "#b00020";
+}
 
-    document.getElementById("diagnosisText").innerText = data.diagnosis || "—";
-    document.getElementById("scoreList").innerHTML = metricsList.concat(scoresList).join("");
-  }
-
-  function setServiceStatus(text, ok = true) {
-    const el = document.getElementById("serviceStatus");
-    if (!el) return;
-    el.textContent = "Estado del servicio: " + text;
-    el.style.color = ok ? "#2f7a2f" : "#b00020";
-  }
-
-  async function pingBackend() {
-    try {
-      const res = await fetch(HEALTH_URL, { method: "GET", cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const json = await res.json();
-      if (json && json.status === "ok") {
-        setServiceStatus("activo");
-      } else {
-        setServiceStatus("respuesta inesperada", false);
-      }
-    } catch (e) {
-      setServiceStatus("no disponible: " + e.message, false);
-    }
-  }
-
-  let pingTimer = null;
-
-  function startPing() {
-    if (pingTimer) return;
-    pingTimer = setInterval(pingBackend, PING_INTERVAL_MS);
-  }
-
-  function stopPing() {
-    if (!pingTimer) return;
-    clearInterval(pingTimer);
-    pingTimer = null;
-  }
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      startPing();
-      pingBackend();
+async function pingBackend() {
+  try {
+    const res = await fetch(HEALTH_URL, { method: "GET", cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    if (json && json.status === "ok") {
+      setServiceStatus("activo");
     } else {
-      stopPing();
+      setServiceStatus("respuesta inesperada", false);
     }
-  });
+  } catch (e) {
+    setServiceStatus("no disponible: " + e.message, false);
+  }
+}
 
-  window.addEventListener("load", () => {
-    pingBackend();
+let pingTimer = null;
+
+function startPing() {
+  if (pingTimer) return;
+  pingTimer = setInterval(pingBackend, PING_INTERVAL_MS);
+}
+
+function stopPing() {
+  if (!pingTimer) return;
+  clearInterval(pingTimer);
+  pingTimer = null;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
     startPing();
-  });
+    pingBackend();
+  } else {
+    stopPing();
+  }
+});
 
-  document.getElementById("uploadForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await pingBackend(); // Wake-up justo antes del análisis
+window.addEventListener("load", () => {
+  pingBackend();
+  startPing();
+});
 
-    const fileInput = document.getElementById("imageInput");
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
+document.getElementById("uploadForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await pingBackend();
 
-    document.getElementById("diagnosisText").innerText = "Analizando...";
-    document.getElementById("scoreList").innerHTML = "";
+  const fileInput = document.getElementById("imageInput");
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
 
-    try {
-      const response = await fetch(ENDPOINT, { method: "POST", body: formData });
-      const data = await response.json();
-      renderReport(data);
-    } catch (err) {
-      document.getElementById("diagnosisText").innerText = "Error al analizar: " + err.message;
-    }
-  });
-  </script>
-</body>
-</html>
+  document.getElementById("diagnosisText").innerText = "Analizando...";
+  document.getElementById("scoreList").innerHTML = "";
+
+  try {
+    const response = await fetch(ENDPOINT, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Accept": "application/json"
+      }
