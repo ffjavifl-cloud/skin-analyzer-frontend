@@ -1,72 +1,68 @@
-const backendUrl = "https://aging-analyzer.onrender.com";
+const backendURL = "https://aging-analyzer.onrender.com"; // ✅ Asegúrate que esta URL sea la correcta
 
-async function checkStatus() {
-  try {
-    const res = await fetch(backendUrl + "/");
-    if (res.ok) {
-      document.getElementById("status").innerText = "Estado del servicio: activo";
-    } else {
-      document.getElementById("status").innerText = "Estado del servicio: no disponible";
+document.addEventListener("DOMContentLoaded", () => {
+  const analyzeBtn = document.getElementById("analyze-btn");
+  const imageInput = document.getElementById("image-upload");
+  const statusDiv = document.getElementById("status");
+  const fitzpatrickLabel = document.getElementById("fitzpatrick-label");
+  const clinicalReport = document.getElementById("clinical-report");
+  const diagnosticReport = document.getElementById("diagnostic-report");
+  const copyBtn = document.getElementById("copy-report");
+
+  // ✅ Comprobar si el backend está activo
+  fetch(backendURL + "/")
+    .then(res => res.ok ? statusDiv.textContent = "Estado del servicio: activo" : statusDiv.textContent = "Estado del servicio: inactivo")
+    .catch(() => statusDiv.textContent = "Estado del servicio: error de conexión");
+
+  analyzeBtn.addEventListener("click", async () => {
+    const file = imageInput.files[0];
+    if (!file) return alert("Selecciona una imagen primero.");
+
+    statusDiv.textContent = "Analizando...";
+    clinicalReport.innerHTML = "";
+    diagnosticReport.textContent = "";
+    fitzpatrickLabel.textContent = "";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(backendURL + "/analyze", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) throw new Error("Error al analizar");
+
+      const data = await res.json();
+
+      // ✅ Mostrar tipo de piel
+      fitzpatrickLabel.textContent = "Tipo de piel (Fitzpatrick): " + data.fitzpatrick;
+
+      // ✅ Mostrar informe clínico
+      const ul = document.createElement("ul");
+      data.report.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.parameter}: ${item.clinical_phrase} (Score: ${item.score}/10)`;
+        ul.appendChild(li);
+      });
+      clinicalReport.appendChild(ul);
+
+      // ✅ Mostrar diagnóstico
+      diagnosticReport.textContent = "Diagnóstico: " + data.diagnosis;
+
+      // ✅ Copiar informe
+      copyBtn.onclick = () => {
+        const text = `Tipo de piel: ${data.fitzpatrick}\n\n` +
+          data.report.map(item => `${item.parameter}: ${item.clinical_phrase} (Score: ${item.score}/10)`).join("\n") +
+          `\n\nDiagnóstico: ${data.diagnosis}`;
+        navigator.clipboard.writeText(text);
+        alert("Informe copiado.");
+      };
+
+      statusDiv.textContent = "Análisis completado ✅";
+    } catch (err) {
+      statusDiv.textContent = "Error al analizar: " + err.message;
     }
-  } catch (e) {
-    document.getElementById("status").innerText = "Estado del servicio: no disponible";
-  }
-}
-
-document.getElementById("analyze-btn").addEventListener("click", async () => {
-  const fileInput = document.getElementById("image-upload");
-  if (!fileInput.files.length) {
-    alert("Por favor, selecciona una imagen.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("file", fileInput.files[0]);
-
-  try {
-    const res = await fetch(backendUrl + "/analyze", {
-      method: "POST",
-      body: formData
-    });
-
-    if (!res.ok) {
-      document.getElementById("diagnostic-report").innerText = "Error al analizar la imagen.";
-      return;
-    }
-
-    const data = await res.json();
-
-    // Mostrar tipo Fitzpatrick
-    document.getElementById("fitzpatrick-label").innerText =
-      "Tipo de piel (Fitzpatrick): " + data.fitzpatrick;
-
-    // Mostrar frases clínicas por parámetro
-    let reportHtml = "<h3>Informe clínico</h3><ul>";
-    for (const [param, phrase] of Object.entries(data.report)) {
-      reportHtml += `<li>${phrase}</li>`;
-    }
-    reportHtml += "</ul>";
-    document.getElementById("clinical-report").innerHTML = reportHtml;
-
-    // Mostrar diagnóstico completo
-    document.getElementById("diagnostic-report").innerText = data.diagnosis;
-
-  } catch (e) {
-    document.getElementById("diagnostic-report").innerText = "Error al analizar: " + e.message;
-  }
-});
-
-// Botón para copiar informe
-document.getElementById("copy-report").addEventListener("click", () => {
-  const reportText =
-    document.getElementById("fitzpatrick-label").innerText + "\n" +
-    document.getElementById("clinical-report").innerText + "\n" +
-    document.getElementById("diagnostic-report").innerText;
-
-  navigator.clipboard.writeText(reportText).then(() => {
-    alert("Informe copiado al portapapeles");
   });
 });
-
-// Comprobar estado al cargar
-checkStatus();
