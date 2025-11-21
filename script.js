@@ -1,6 +1,5 @@
 const backendURL = "https://aging-analyzer.onrender.com";
 
-// Verificar estado del backend al cargar la página
 async function checkBackendStatus() {
     const statusBox = document.getElementById("status");
     const analyzeButton = document.getElementById("analyzeButton");
@@ -23,7 +22,6 @@ async function checkBackendStatus() {
 
 window.addEventListener("load", checkBackendStatus);
 
-// Funciones para formatear informe clínico
 function getSeverityEmoji(value) {
     if (value >= 7) return "🔴";
     if (value >= 4) return "🟠";
@@ -50,11 +48,11 @@ function formatReport(result) {
     return reportText;
 }
 
-// Analizar imagen
+let chartInstance = null;
+
 async function analyzeImage() {
     const input = document.getElementById("imageInput");
     const resultBox = document.getElementById("result");
-    const chartBox = document.getElementById("chart");
 
     if (!input.files.length) {
         alert("Por favor selecciona una imagen");
@@ -65,7 +63,6 @@ async function analyzeImage() {
     formData.append("file", input.files[0]);
 
     resultBox.innerText = "⏳ Analizando imagen...";
-    chartBox.innerHTML = "";
 
     try {
         const response = await fetch(`${backendURL}/analyze`, {
@@ -79,8 +76,6 @@ async function analyzeImage() {
 
         const result = await response.json();
         resultBox.innerText = formatReport(result);
-
-        // Generar gráfico hexagonal dinámico
         renderHexagonChart(result.scores);
     } catch (error) {
         resultBox.innerText = "❌ Error al conectar con el backend";
@@ -88,7 +83,6 @@ async function analyzeImage() {
     }
 }
 
-// Copiar informe
 function copyReport() {
     const resultBox = document.getElementById("result");
     navigator.clipboard.writeText(resultBox.innerText)
@@ -96,24 +90,26 @@ function copyReport() {
         .catch(() => alert("Error al copiar el informe"));
 }
 
-// Gráfico hexagonal con Chart.js
 function renderHexagonChart(scores) {
     const ctx = document.getElementById("hexagonChart").getContext("2d");
-    const data = {
-        labels: Object.keys(scores),
-        datasets: [{
-            label: "Score clínico",
-            data: Object.values(scores),
-            backgroundColor: "rgba(0, 120, 212, 0.2)",
-            borderColor: "#0078D4",
-            borderWidth: 2,
-            pointBackgroundColor: "#0078D4"
-        }]
-    };
 
-    new Chart(ctx, {
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
         type: "radar",
-        data: data,
+        data: {
+            labels: Object.keys(scores),
+            datasets: [{
+                label: "Score clínico",
+                data: Object.values(scores),
+                backgroundColor: "rgba(0, 120, 212, 0.2)",
+                borderColor: "#0078D4",
+                borderWidth: 2,
+                pointBackgroundColor: "#0078D4"
+            }]
+        },
         options: {
             scales: {
                 r: {
