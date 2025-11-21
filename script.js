@@ -75,4 +75,5 @@ async function analyzeImage() {
         }
 
         const result = await response.json();
-        resultBox.innerText = formatReport(result);—
+        resultBox.innerText = formatReport(result);
+        renderHexagonChart(result.scores);
