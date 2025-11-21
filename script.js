@@ -23,7 +23,14 @@ async function analyzeImage() {
         }
 
         const result = await response.json();
-        resultBox.innerText = JSON.stringify(result, null, 2);
+
+        // Formatear informe clínico
+        let reportText = `🧾 ${result.diagnosis}\n\n`;
+        for (const [param, value] of Object.entries(result.scores)) {
+            reportText += `🔹 ${param}: ${value}/10\n`;
+        }
+
+        resultBox.innerText = reportText;
     } catch (error) {
         resultBox.innerText = "Error al conectar con el backend";
         console.error("Error:", error);
