@@ -5,7 +5,7 @@ async function checkBackendStatus() {
     const analyzeButton = document.getElementById("analyzeButton");
 
     try {
-        const response = await fetch(`${backendURL}/`);
+        const response = await fetch(`${backendURL}/analyze`, { method: "OPTIONS" });
         if (response.ok) {
             statusBox.innerText = "✅ Servicio activo";
             analyzeButton.disabled = false;
@@ -77,3 +77,8 @@ async function analyzeImage() {
         const result = await response.json();
         resultBox.innerText = formatReport(result);
         renderHexagonChart(result.scores);
+    } catch (error) {
+        resultBox.innerText = "❌ Error al analizar la imagen";
+        console.error("Error en el análisis:", error);
+    }
+}
