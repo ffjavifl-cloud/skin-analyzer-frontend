@@ -65,6 +65,20 @@
 
     <!-- Chart.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+    <!-- Verificación de estado del backend -->
+    <script>
+        fetch("https://aging-analyzer.onrender.com/analyze", { method: "OPTIONS" })
+            .then(() => {
+                document.getElementById("status").textContent = "Estado del servicio: activo ✅";
+                document.getElementById("analyzeButton").disabled = false;
+            })
+            .catch(() => {
+                document.getElementById("status").textContent = "Estado del servicio: inactivo ❌";
+            });
+    </script>
+
+    <!-- Tu lógica principal -->
     <script src="script.js"></script>
 </body>
 </html>
