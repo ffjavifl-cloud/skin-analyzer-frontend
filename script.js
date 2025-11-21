@@ -66,9 +66,12 @@ async function analyzeImage() {
 
     try {
         const response = await fetch(`${backendURL}/analyze`, {
-            method: "POST",
-            body: formData
-        });
+    method: "POST",
+    headers: {
+        "Accept": "application/json"
+    },
+    body: formData
+});
 
         if (!response.ok) {
             throw new Error("Respuesta no válida del backend");
