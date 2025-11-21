@@ -1,28 +1,122 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Analizador de piel</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+    <meta charset="UTF-8">
+    <title>Skin Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        #result {
+            white-space: pre-wrap;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #0078D4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #005a9e;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-  <h1>Analizador de piel</h1>
+    <h1>Analizador de piel</h1>
 
-  <div>
-    <label for="image-upload">Imagen:</label>
-    <input type="file" id="image-upload" accept="image/*">
-    <button id="analyze-btn">Analizar</button>
-  </div>
+    <input type="file" id="imageInput" accept="image/*">
+    <button id="analyzeButton" onclick="analyzeImage()" disabled>Analizar</button>
 
-  <div id="status">Estado del servicio: comprobando...</div>
+    <p id="status">Estado del servicio: comprobando...</p>
 
-  <div id="fitzpatrick-label" class="label"></div>
+    <div id="result">Esperando análisis...</div>
 
-  <div id="clinical-report"></div>
+    <button onclick="copyReport()">Copiar informe</button>
 
-  <div id="diagnostic-report"></div>
+    <script>
+        const backendURL = "https://aging-analyzer.onrender.com";
 
-  <button id="copy-report">Copiar informe</button>
+        async function checkBackendStatus() {
+            const statusBox = document.getElementById("status");
+            const analyzeButton = document.getElementById("analyzeButton");
+
+            try {
+                const response = await fetch(`${backendURL}/`);
+                if (response.ok) {
+                    statusBox.innerText = "✅ Servicio activo";
+                    analyzeButton.disabled = false;
+                } else {
+                    statusBox.innerText = "⚠️ Servicio lento, puedes intentar analizar";
+                    analyzeButton.disabled = false;
+                }
+            } catch (error) {
+                statusBox.innerText = "❌ No se pudo conectar con el backend";
+                analyzeButton.disabled = false;
+                console.error("Error al verificar estado del backend:", error);
+            }
+        }
+
+        window.addEventListener("load", checkBackendStatus);
+
+        async function analyzeImage() {
+            const input = document.getElementById("imageInput");
+            const resultBox = document.getElementById("result");
+
+            if (!input.files.length) {
+                alert("Por favor selecciona una imagen");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", input.files[0]);
+
+            resultBox.innerText = "⏳ Analizando imagen...";
+
+            try {
+                const response = await fetch(`${backendURL}/analyze`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error("Respuesta no válida del backend");
+                }
+
+                const result = await response.json();
+
+                let reportText = `🧾 ${result.diagnosis}\n\n`;
+                for (const [param, value] of Object.entries(result.scores)) {
+                    reportText += `🔹 ${param}: ${value}/10\n`;
+                }
+
+                resultBox.innerText = reportText;
+            } catch (error) {
+                resultBox.innerText = "❌ Error al conectar con el backend";
+                console.error("Error:", error);
+            }
+        }
+
+        function copyReport() {
+            const resultBox = document.getElementById("result");
+            navigator.clipboard.writeText(resultBox.innerText)
+                .then(() => alert("Informe copiado al portapapeles"))
+                .catch(() => alert("Error al copiar el informe"));
+        }
+    </script>
 </body>
 </html>
