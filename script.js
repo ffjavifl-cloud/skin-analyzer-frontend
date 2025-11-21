@@ -5,7 +5,7 @@ async function checkBackendStatus() {
     const analyzeButton = document.getElementById("analyzeButton");
 
     try {
-        const response = await fetch(`${backendURL}/analyze`, { method: "HEAD" });
+        const response = await fetch(`${backendURL}/docs`);
         if (response.ok) {
             statusBox.innerText = "✅ Servicio activo";
             analyzeButton.disabled = false;
