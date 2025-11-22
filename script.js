@@ -1,6 +1,7 @@
 const backendURL = "https://aging-analyzer.onrender.com";
 let chartInstance = null;
 let previousScores = null;
+let backendActivo = false;
 
 async function checkBackendStatus() {
     const statusBox = document.getElementById("status");
@@ -10,26 +11,27 @@ async function checkBackendStatus() {
         const response = await fetch(`${backendURL}/status`);
         if (response.ok) {
             statusBox.innerText = "✅ Servicio activo";
-            analyzeButton.disabled = true; // se activa solo si hay imagen
+            backendActivo = true;
         } else {
             statusBox.innerText = "⚠️ Servicio lento, puedes intentar analizar";
-            analyzeButton.disabled = true;
+            backendActivo = true;
         }
     } catch (error) {
         statusBox.innerText = "❌ No se pudo conectar con el backend";
-        analyzeButton.disabled = true;
+        backendActivo = false;
         console.error("Error al verificar estado del backend:", error);
     }
+
+    analyzeButton.disabled = !(backendActivo && fileInput.files.length);
 }
 
 window.addEventListener("load", checkBackendStatus);
 
-// Activar botón solo si hay imagen
 const fileInput = document.getElementById("imageInput");
 const analyzeButton = document.getElementById("analyzeButton");
 
 fileInput.addEventListener("change", () => {
-    analyzeButton.disabled = !fileInput.files.length;
+    analyzeButton.disabled = !(backendActivo && fileInput.files.length);
 });
 
 async function analyzeImage() {
@@ -48,7 +50,7 @@ async function analyzeImage() {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const response = await fetch(`${backendURL}/analyze`, {
             method: "POST",
@@ -60,7 +62,9 @@ async function analyzeImage() {
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Error del backend: ${response.status} - ${errorText}`);
+            console.error("Respuesta del backend:", errorText);
+            statusBox.innerText = "❌ Error en el análisis. Intenta con otra imagen.";
+            return;
         }
 
         const data = await response.json();
