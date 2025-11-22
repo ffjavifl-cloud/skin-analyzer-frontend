@@ -47,6 +47,12 @@ async function analyzeImage() {
     const formData = new FormData();
     formData.append("file", file);
 
+    // Añadimos metadatos edad y sexo (opcionales, seguros)
+    const ageValue = document.getElementById("ageInput").value;
+    const sexValue = document.getElementById("sexInput").value;
+    if (ageValue) formData.append("age", ageValue);
+    if (sexValue) formData.append("sex", sexValue);
+
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -87,6 +93,8 @@ analyzeButton.addEventListener("click", analyzeImage);
 function mostrarResultados(data) {
     const scores = data.scores;
     const diagnosis = data.diagnosis;
+    const skinAge = data.skin_age; // puede venir del backend
+    const meta = data.meta || {};
     previousScores = scores;
 
     const reportDiv = document.getElementById("clinical-report");
@@ -98,6 +106,17 @@ function mostrarResultados(data) {
         reportHTML += `<li>${emoji} <strong>${param}</strong>: ${value}/10</li>`;
     }
     reportHTML += "</ul>";
+
+    // Metadatos y edad de piel (si disponibles)
+    const ageTxt = meta.age ? `Edad: ${meta.age}` : "";
+    const sexTxt = meta.sex ? `Sexo: ${meta.sex === "male" ? "Varón" : meta.sex === "female" ? "Mujer" : meta.sex}` : "";
+    const skinAgeTxt = (typeof skinAge !== "undefined") ? `Edad de piel estimada: ${skinAge}` : "";
+
+    const metaBlock = [sexTxt, ageTxt, skinAgeTxt].filter(Boolean).join(" · ");
+    if (metaBlock) {
+        reportHTML += `<div style="margin-top:8px;color:#555;"><strong>Perfil:</strong> ${metaBlock}</div>`;
+    }
+
     reportDiv.innerHTML = reportHTML;
 
     diagnosisDiv.innerText = `🩺 Diagnóstico: ${diagnosis}`;
@@ -190,7 +209,7 @@ function downloadChart() {
     link.click();
 }
 
-// ✅ Descargar informe + gráfico en PDF
+// ✅ Informe completo (texto + gráfico) en PDF
 function downloadFullPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
