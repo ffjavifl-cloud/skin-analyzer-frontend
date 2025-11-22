@@ -79,7 +79,11 @@ async function analyzeImage() {
 
         const result = await response.json();
         resultBox.innerText = formatReport(result);
-        renderHexagonChart(result.scores);
+
+        // Esperar a que el canvas esté visible antes de dibujar
+        setTimeout(() => {
+            renderHexagonChart(result.scores);
+        }, 100);
     } catch (error) {
         resultBox.innerText = "❌ Error al analizar la imagen";
         console.error("Error en el análisis:", error);
@@ -87,7 +91,10 @@ async function analyzeImage() {
 }
 
 function renderHexagonChart(scores) {
-    const ctx = document.getElementById("radarChart");
+    const canvas = document.getElementById("radarChart");
+    if (!canvas || !canvas.getContext) return;
+
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const labels = [
