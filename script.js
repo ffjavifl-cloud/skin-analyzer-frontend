@@ -10,26 +10,32 @@ async function checkBackendStatus() {
         const response = await fetch(`${backendURL}/status`);
         if (response.ok) {
             statusBox.innerText = "✅ Servicio activo";
-            analyzeButton.disabled = false;
+            analyzeButton.disabled = true; // se activa solo si hay imagen
         } else {
             statusBox.innerText = "⚠️ Servicio lento, puedes intentar analizar";
-            analyzeButton.disabled = false;
+            analyzeButton.disabled = true;
         }
     } catch (error) {
         statusBox.innerText = "❌ No se pudo conectar con el backend";
-        analyzeButton.disabled = false;
+        analyzeButton.disabled = true;
         console.error("Error al verificar estado del backend:", error);
     }
 }
 
 window.addEventListener("load", checkBackendStatus);
 
+// Activar botón solo si hay imagen
+const fileInput = document.getElementById("imageInput");
+const analyzeButton = document.getElementById("analyzeButton");
+
+fileInput.addEventListener("change", () => {
+    analyzeButton.disabled = !fileInput.files.length;
+});
+
 async function analyzeImage() {
     const statusBox = document.getElementById("status");
     statusBox.innerText = "⏳ Analizando imagen...";
 
-    const fileInput = document.getElementById("imageInput");
-    const analyzeButton = document.getElementById("analyzeButton");
     const file = fileInput.files[0];
 
     if (!file) {
@@ -53,10 +59,12 @@ async function analyzeImage() {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            throw new Error("Respuesta no válida del backend");
+            const errorText = await response.text();
+            throw new Error(`Error del backend: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log("📊 Respuesta recibida:", data);
         mostrarResultados(data);
         statusBox.innerText = "✅ Análisis completado";
     } catch (error) {
@@ -65,6 +73,6 @@ async function analyzeImage() {
     }
 }
 
-document.getElementById("analyzeButton").addEventListener("click", analyzeImage);
+analyzeButton.addEventListener("click", analyzeImage);
 
 // Aquí puedes mantener tus funciones mostrarResultados, generarInforme, descargarPDF, compartirInforme, descargarGrafico, etc.
