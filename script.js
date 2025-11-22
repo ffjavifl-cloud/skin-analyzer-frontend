@@ -80,7 +80,6 @@ async function analyzeImage() {
         const result = await response.json();
         resultBox.innerText = formatReport(result);
 
-        // Esperar a que el canvas esté visible antes de dibujar
         requestAnimationFrame(() => {
             renderHexagonChart(result.scores);
         });
@@ -94,7 +93,6 @@ function renderHexagonChart(scores) {
     const canvas = document.getElementById("radarChart");
     if (!canvas) return;
 
-    // Asegurar que el canvas tenga contexto 2D
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -112,6 +110,12 @@ function renderHexagonChart(scores) {
         return Math.max(0, Math.min(10, v));
     });
 
+    const pointColors = dataValues.map(v => {
+        if (v >= 7) return "red";
+        if (v >= 4) return "orange";
+        return "green";
+    });
+
     if (chartInstance && typeof chartInstance.destroy === "function") {
         chartInstance.destroy();
     }
@@ -126,7 +130,7 @@ function renderHexagonChart(scores) {
                 fill: true,
                 backgroundColor: "rgba(54, 162, 235, 0.2)",
                 borderColor: "rgba(54, 162, 235, 1)",
-                pointBackgroundColor: "rgba(54, 162, 235, 1)"
+                pointBackgroundColor: pointColors
             }]
         },
         options: {
@@ -152,4 +156,14 @@ function renderHexagonChart(scores) {
             }
         }
     });
+}
+
+function downloadChart() {
+    const canvas = document.getElementById("radarChart");
+    if (!canvas) return;
+
+    const link = document.createElement("a");
+    link.download = "perfil_clinico.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
 }
