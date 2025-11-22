@@ -81,9 +81,9 @@ async function analyzeImage() {
         resultBox.innerText = formatReport(result);
 
         // Esperar a que el canvas esté visible antes de dibujar
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             renderHexagonChart(result.scores);
-        }, 100);
+        });
     } catch (error) {
         resultBox.innerText = "❌ Error al analizar la imagen";
         console.error("Error en el análisis:", error);
@@ -92,8 +92,9 @@ async function analyzeImage() {
 
 function renderHexagonChart(scores) {
     const canvas = document.getElementById("radarChart");
-    if (!canvas || !canvas.getContext) return;
+    if (!canvas) return;
 
+    // Asegurar que el canvas tenga contexto 2D
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
