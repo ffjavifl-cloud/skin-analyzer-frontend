@@ -24,6 +24,9 @@
             padding: 20px;
             border: 1px solid #ccc;
             margin-top: 20px;
+            width: 100%;
+            max-width: 500px;
+            height: 400px;
         }
         button {
             padding: 10px 20px;
@@ -41,9 +44,8 @@
             font-weight: bold;
         }
         canvas {
-            max-width: 500px;
-            margin-top: 20px;
-            display: block;
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 </head>
@@ -59,12 +61,13 @@
 
     <button onclick="copyReport()">Copiar informe</button>
 
+    <!-- Contenedor del gráfico radar -->
     <div id="chartContainer">
-        <canvas id="hexagonChart"></canvas>
+        <canvas id="radarChart"></canvas>
     </div>
 
     <!-- Chart.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <!-- Verificación de estado del backend -->
     <script>
