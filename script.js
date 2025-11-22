@@ -39,7 +39,6 @@ async function analyzeImage() {
     statusBox.innerText = "⏳ Analizando imagen...";
 
     const file = fileInput.files[0];
-
     if (!file) {
         statusBox.innerText = "⚠️ Selecciona una imagen antes de analizar.";
         return;
@@ -79,4 +78,56 @@ async function analyzeImage() {
 
 analyzeButton.addEventListener("click", analyzeImage);
 
-// Aquí puedes mantener tus funciones mostrarResultados, generarInforme, descargarPDF, compartirInforme, descargarGrafico, etc.
+function mostrarResultados(data) {
+    const scores = data.scores;
+    const diagnosis = data.diagnosis;
+    previousScores = scores;
+
+    const reportDiv = document.getElementById("clinical-report");
+    const diagnosisDiv = document.getElementById("diagnostic-report");
+
+    let reportHTML = "<ul>";
+    for (const [param, value] of Object.entries(scores)) {
+        const emoji = value >= 7 ? "🔴" : value >= 4 ? "🟠" : "🟢";
+        reportHTML += `<li>${emoji} <strong>${param}</strong>: ${value}/10</li>`;
+    }
+    reportHTML += "</ul>";
+    reportDiv.innerHTML = reportHTML;
+
+    diagnosisDiv.innerText = `🩺 Diagnóstico: ${diagnosis}`;
+
+    actualizarGrafico(scores);
+}
+
+function actualizarGrafico(scores) {
+    const ctx = document.getElementById("radarChart").getContext("2d");
+    const labels = Object.keys(scores);
+    const dataValues = Object.values(scores);
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: "radar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Score clínico",
+                data: dataValues,
+                backgroundColor: "rgba(0, 102, 204, 0.2)",
+                borderColor: "#0066cc",
+                pointBackgroundColor: "#0066cc"
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    min: 0,
+                    max: 10,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+}
