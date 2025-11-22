@@ -1,4 +1,6 @@
 const backendURL = "https://aging-analyzer.onrender.com";
+let chartInstance = null;
+let previousScores = null;
 
 async function checkBackendStatus() {
     const statusBox = document.getElementById("status");
@@ -85,8 +87,6 @@ function formatReport(result) {
     return reportText;
 }
 
-let chartInstance = null;
-
 async function analyzeImage() {
     const input = document.getElementById("imageInput");
     const resultBox = document.getElementById("result");
@@ -118,13 +118,15 @@ async function analyzeImage() {
         requestAnimationFrame(() => {
             renderHexagonChart(result.scores);
         });
+
+        previousScores = result.scores;
     } catch (error) {
         resultBox.innerText = "❌ Error al analizar la imagen";
         console.error("Error en el análisis:", error);
     }
 }
 
-function renderHexagonChart(scores) {
+function renderHexagonChart(currentScores) {
     const canvas = document.getElementById("radarChart");
     if (!canvas) return;
 
@@ -140,12 +142,10 @@ function renderHexagonChart(scores) {
         "wrinkles"
     ];
 
-    const dataValues = labels.map(k => {
-        const v = Number(scores[k] ?? 0);
-        return Math.max(0, Math.min(10, v));
-    });
+    const currentValues = labels.map(k => Math.max(0, Math.min(10, Number(currentScores[k] ?? 0))));
+    const previousValues = previousScores ? labels.map(k => Math.max(0, Math.min(10, Number(previousScores[k] ?? 0)))) : null;
 
-    const pointColors = dataValues.map(v => {
+    const pointColors = currentValues.map(v => {
         if (v >= 7) return "red";
         if (v >= 4) return "orange";
         return "green";
@@ -159,46 +159,14 @@ function renderHexagonChart(scores) {
         type: "radar",
         data: {
             labels,
-            datasets: [{
-                label: "Perfil clínico (0–10)",
-                data: dataValues,
-                fill: true,
-                backgroundColor: "rgba(54, 162, 235, 0.2)",
-                borderColor: "rgba(54, 162, 235, 1)",
-                pointBackgroundColor: pointColors
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => `${ctx.label}: ${ctx.parsed.r}/10`
-                    }
-                }
-            },
-            scales: {
-                r: {
-                    beginAtZero: true,
-                    min: 0,
-                    max: 10,
-                    ticks: { stepSize: 2 },
-                    grid: { circular: true },
-                    pointLabels: { font: { size: 12 } }
-                }
-            }
-        }
-    });
-}
-
-function downloadChart() {
-    const canvas = document.getElementById("radarChart");
-    if (!canvas) return;
-
-    const link = document.createElement("a");
-    link.download = "perfil_clinico.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-                    }
+            datasets: [
+                {
+                    label: "Actual",
+                    data: currentValues,
+                    fill: true,
+                    backgroundColor: "rgba(54, 162, 235, 0.2)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    pointBackgroundColor: pointColors
+                },
+                previousValues && {
+                    label: "Anterior
