@@ -5,7 +5,9 @@ async function checkBackendStatus() {
     const analyzeButton = document.getElementById("analyzeButton");
 
     try {
-        const response = await fetch(`${backendURL}/docs`);
+        const response = await fetch(`${backendURL}/analyze`, {
+            method: "OPTIONS"
+        });
         if (response.ok) {
             statusBox.innerText = "✅ Servicio activo";
             analyzeButton.disabled = false;
@@ -66,20 +68,20 @@ async function analyzeImage() {
 
     try {
         const response = await fetch(`${backendURL}/analyze`, {
-    method: "POST",
-    headers: {
-        "Accept": "application/json"
-    },
-    body: formData
-});
+            method: "POST",
+            body: formData
+        });
 
-        if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (!response.ok || !contentType.includes("application/json")) {
             throw new Error("Respuesta no válida del backend");
         }
 
         const result = await response.json();
         resultBox.innerText = formatReport(result);
-        renderHexagonChart(result.scores);
+        if (typeof renderHexagonChart === "function") {
+            renderHexagonChart(result.scores);
+        }
     } catch (error) {
         resultBox.innerText = "❌ Error al analizar la imagen";
         console.error("Error en el análisis:", error);
