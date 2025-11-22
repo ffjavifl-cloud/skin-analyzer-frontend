@@ -137,3 +137,55 @@ function actualizarGrafico(scores) {
         }
     });
 }
+
+// ✅ Función 1: Copiar informe
+function copyReport() {
+    const report = document.getElementById("clinical-report").innerText;
+    const diagnosis = document.getElementById("diagnostic-report").innerText;
+    const fullText = `${report}\n${diagnosis}`;
+
+    navigator.clipboard.writeText(fullText)
+        .then(() => alert("📋 Informe copiado al portapapeles"))
+        .catch(err => console.error("Error al copiar informe:", err));
+}
+
+// ✅ Función 2: Descargar informe PDF
+function downloadReport() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const report = document.getElementById("clinical-report").innerText;
+    const diagnosis = document.getElementById("diagnostic-report").innerText;
+    const fullText = `Informe clínico\n\n${report}\n\n${diagnosis}`;
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text(fullText, 20, 30, { maxWidth: 170 });
+
+    doc.save("informe_clinico.pdf");
+}
+
+// ✅ Función 3: Compartir informe
+function shareReport() {
+    const report = document.getElementById("clinical-report").innerText;
+    const diagnosis = document.getElementById("diagnostic-report").innerText;
+    const fullText = `${report}\n${diagnosis}`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: "Informe clínico de piel",
+            text: fullText
+        }).catch(err => console.error("Error al compartir:", err));
+    } else {
+        alert("⚠️ Compartir no está disponible en este dispositivo");
+    }
+}
+
+// ✅ Función 4: Descargar gráfico
+function downloadChart() {
+    const canvas = document.getElementById("radarChart");
+    const link = document.createElement("a");
+    link.download = "grafico_clinico.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
