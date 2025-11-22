@@ -59,14 +59,20 @@ async function analyzeImage() {
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Respuesta del backend:", errorText);
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error("Respuesta no válida del backend");
+        }
+
+        if (!response.ok || !data.scores || !data.diagnosis) {
+            console.error("Respuesta del backend:", data);
             statusBox.innerText = "❌ Error en el análisis. Intenta con otra imagen.";
             return;
         }
 
-        const data = await response.json();
         console.log("📊 Respuesta recibida:", data);
         mostrarResultados(data);
         statusBox.innerText = "✅ Análisis completado";
