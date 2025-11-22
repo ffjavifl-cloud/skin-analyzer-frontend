@@ -79,11 +79,69 @@ async function analyzeImage() {
 
         const result = await response.json();
         resultBox.innerText = formatReport(result);
-        if (typeof renderHexagonChart === "function") {
-            renderHexagonChart(result.scores);
-        }
+        renderHexagonChart(result.scores);
     } catch (error) {
         resultBox.innerText = "❌ Error al analizar la imagen";
         console.error("Error en el análisis:", error);
     }
+}
+
+function renderHexagonChart(scores) {
+    const ctx = document.getElementById("radarChart");
+    if (!ctx) return;
+
+    const labels = [
+        "brightness",
+        "dryness",
+        "lines",
+        "pigmentation",
+        "texture-pores",
+        "wrinkles"
+    ];
+
+    const dataValues = labels.map(k => {
+        const v = Number(scores[k] ?? 0);
+        return Math.max(0, Math.min(10, v));
+    });
+
+    if (chartInstance && typeof chartInstance.destroy === "function") {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: "radar",
+        data: {
+            labels,
+            datasets: [{
+                label: "Perfil clínico (0–10)",
+                data: dataValues,
+                fill: true,
+                backgroundColor: "rgba(54, 162, 235, 0.2)",
+                borderColor: "rgba(54, 162, 235, 1)",
+                pointBackgroundColor: "rgba(54, 162, 235, 1)"
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.label}: ${ctx.parsed.r}/10`
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 10,
+                    ticks: { stepSize: 2 },
+                    grid: { circular: true },
+                    pointLabels: { font: { size: 12 } }
+                }
+            }
+        }
+    });
 }
