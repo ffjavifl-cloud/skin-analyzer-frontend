@@ -24,4 +24,47 @@ async function checkBackendStatus() {
 
 window.addEventListener("load", checkBackendStatus);
 
-// ... (resto del script permanece igual, incluyendo funciones de análisis, gráfico, PDF, compartir, etc.)
+async function analyzeImage() {
+    const statusBox = document.getElementById("status");
+    statusBox.innerText = "⏳ Analizando imagen...";
+
+    const fileInput = document.getElementById("imageInput");
+    const analyzeButton = document.getElementById("analyzeButton");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        statusBox.innerText = "⚠️ Selecciona una imagen antes de analizar.";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+
+        const response = await fetch(`${backendURL}/analyze`, {
+            method: "POST",
+            body: formData,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error("Respuesta no válida del backend");
+        }
+
+        const data = await response.json();
+        mostrarResultados(data);
+        statusBox.innerText = "✅ Análisis completado";
+    } catch (error) {
+        statusBox.innerText = "❌ Error en el análisis. Intenta con otra imagen.";
+        console.error("Error al analizar:", error);
+    }
+}
+
+document.getElementById("analyzeButton").addEventListener("click", analyzeImage);
+
+// Aquí puedes mantener tus funciones mostrarResultados, generarInforme, descargarPDF, compartirInforme, descargarGrafico, etc.
