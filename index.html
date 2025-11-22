@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Skin Analyzer</title>
+
+    <!-- Chart.js debe ir antes de script.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,6 +32,13 @@
             max-width: 500px;
             height: auto;
         }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 400px;
+            height: 360px;
+        }
         button {
             padding: 10px 20px;
             background-color: #0078D4;
@@ -43,12 +54,6 @@
             margin-top: 20px;
             font-weight: bold;
         }
-        canvas {
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
-            height: 360px;
-        }
     </style>
 </head>
 <body>
@@ -63,27 +68,10 @@
 
     <button onclick="copyReport()">Copiar informe</button>
 
-    <!-- Contenedor del gráfico radar -->
     <div id="chartContainer">
-        <canvas id="radarChart" aria-label="Gráfico clínico radar"></canvas>
+        <canvas id="radarChart"></canvas>
     </div>
 
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-    <!-- Verificación de estado del backend -->
-    <script>
-        fetch("https://aging-analyzer.onrender.com/analyze", { method: "OPTIONS" })
-            .then(() => {
-                document.getElementById("status").textContent = "Estado del servicio: activo ✅";
-                document.getElementById("analyzeButton").disabled = false;
-            })
-            .catch(() => {
-                document.getElementById("status").textContent = "Estado del servicio: inactivo ❌";
-            });
-    </script>
-
-    <!-- Tu lógica principal -->
     <script src="script.js"></script>
 </body>
 </html>
