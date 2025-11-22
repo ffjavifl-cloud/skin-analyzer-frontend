@@ -138,7 +138,7 @@ function actualizarGrafico(scores) {
     });
 }
 
-// ✅ Función 1: Copiar informe
+// ✅ Copiar informe
 function copyReport() {
     const report = document.getElementById("clinical-report").innerText;
     const diagnosis = document.getElementById("diagnostic-report").innerText;
@@ -149,7 +149,7 @@ function copyReport() {
         .catch(err => console.error("Error al copiar informe:", err));
 }
 
-// ✅ Función 2: Descargar informe PDF
+// ✅ Descargar informe PDF
 function downloadReport() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -165,7 +165,7 @@ function downloadReport() {
     doc.save("informe_clinico.pdf");
 }
 
-// ✅ Función 3: Compartir informe
+// ✅ Compartir informe
 function shareReport() {
     const report = document.getElementById("clinical-report").innerText;
     const diagnosis = document.getElementById("diagnostic-report").innerText;
@@ -181,11 +181,31 @@ function shareReport() {
     }
 }
 
-// ✅ Función 4: Descargar gráfico
+// ✅ Descargar gráfico
 function downloadChart() {
     const canvas = document.getElementById("radarChart");
     const link = document.createElement("a");
     link.download = "grafico_clinico.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
+}
+
+// ✅ Descargar informe + gráfico en PDF
+function downloadFullPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const report = document.getElementById("clinical-report").innerText;
+    const diagnosis = document.getElementById("diagnostic-report").innerText;
+    const fullText = `Informe clínico\n\n${report}\n\n${diagnosis}`;
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text(fullText, 20, 30, { maxWidth: 170 });
+
+    const canvas = document.getElementById("radarChart");
+    const imgData = canvas.toDataURL("image/png");
+    doc.addImage(imgData, "PNG", 30, 120, 150, 100);
+
+    doc.save("informe_completo.pdf");
 }
