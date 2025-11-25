@@ -47,7 +47,7 @@ async function analyzeImage() {
     const formData = new FormData();
     formData.append("file", file);
 
-    // Enviar edad como 'edad' (no 'age') para que el backend lo reconozca
+    // Enviar edad como 'edad' para que el backend lo reconozca
     const ageValue = document.getElementById("ageInput").value;
     const sexValue = document.getElementById("sexInput").value;
     if (ageValue) formData.append("edad", ageValue);
