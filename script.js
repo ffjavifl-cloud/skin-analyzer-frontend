@@ -47,10 +47,10 @@ async function analyzeImage() {
     const formData = new FormData();
     formData.append("file", file);
 
-    // Añadimos metadatos edad y sexo (opcionales, seguros)
+    // Enviar edad como 'edad' (no 'age') para que el backend lo reconozca
     const ageValue = document.getElementById("ageInput").value;
     const sexValue = document.getElementById("sexInput").value;
-    if (ageValue) formData.append("age", ageValue);
+    if (ageValue) formData.append("edad", ageValue);
     if (sexValue) formData.append("sex", sexValue);
 
     try {
@@ -73,7 +73,7 @@ async function analyzeImage() {
             throw new Error("Respuesta no válida del backend");
         }
 
-        if (!response.ok || !data.scores || !data.diagnosis) {
+        if (!response.ok || !data.results || !data.diagnosis) {
             console.error("Respuesta del backend:", data);
             statusBox.innerText = "❌ Error en el análisis. Intenta con otra imagen.";
             return;
@@ -91,43 +91,30 @@ async function analyzeImage() {
 analyzeButton.addEventListener("click", analyzeImage);
 
 function mostrarResultados(data) {
-    const scores = data.scores;
+    const scores = data.results;
     const diagnosis = data.diagnosis;
-    const skinAge = data.skin_age; // puede venir del backend
-    const meta = data.meta || {};
     previousScores = scores;
 
     const reportDiv = document.getElementById("clinical-report");
     const diagnosisDiv = document.getElementById("diagnostic-report");
 
     let reportHTML = "<ul>";
-    for (const [param, value] of Object.entries(scores)) {
-        const emoji = value >= 7 ? "🔴" : value >= 4 ? "🟠" : "🟢";
-        reportHTML += `<li>${emoji} <strong>${param}</strong>: ${value}/10</li>`;
+    for (const [param, info] of Object.entries(scores)) {
+        const emoji = info.emoji || (info.score >= 7 ? "🔴" : info.score >= 4 ? "🟠" : "🟢");
+        const context = info.age_context || "";
+        reportHTML += `<li>${emoji} <strong>${param}</strong>: ${info.score}/10<br><span style="color:#666;font-size:0.9em;">${context}</span></li>`;
     }
     reportHTML += "</ul>";
 
-    // Metadatos y edad de piel (si disponibles)
-    const ageTxt = meta.age ? `Edad: ${meta.age}` : "";
-    const sexTxt = meta.sex ? `Sexo: ${meta.sex === "male" ? "Varón" : meta.sex === "female" ? "Mujer" : meta.sex}` : "";
-    const skinAgeTxt = (typeof skinAge !== "undefined") ? `Edad de piel estimada: ${skinAge}` : "";
-
-    const metaBlock = [sexTxt, ageTxt, skinAgeTxt].filter(Boolean).join(" · ");
-    if (metaBlock) {
-        reportHTML += `<div style="margin-top:8px;color:#555;"><strong>Perfil:</strong> ${metaBlock}</div>`;
-    }
-
     reportDiv.innerHTML = reportHTML;
-
     diagnosisDiv.innerText = `🩺 Diagnóstico: ${diagnosis}`;
-
     actualizarGrafico(scores);
 }
 
 function actualizarGrafico(scores) {
     const ctx = document.getElementById("radarChart").getContext("2d");
     const labels = Object.keys(scores);
-    const dataValues = Object.values(scores);
+    const dataValues = Object.values(scores).map(info => info.score);
 
     if (chartInstance) {
         chartInstance.destroy();
